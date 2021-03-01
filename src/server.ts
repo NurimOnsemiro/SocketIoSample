@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import { Socket } from 'socket.io';
+import { EWsNotiCmd, EWsReqCmd, getRandomInt, serverPort } from './const_common';
 
 let app = express();
 
@@ -12,12 +13,6 @@ app.get('/', (req, res) => {
 let server = http.createServer(app);
 
 let io = require('socket.io')(server);
-
-function getRandomInt(min: number, max: number) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min; //최댓값도 포함, 최솟값도 포함
-}
 
 interface IServerForm {
     idx?: number;
@@ -94,9 +89,9 @@ setInterval(()=>{
     }
 
     if(newItems.length !== 0){
-        let newSeq = updateSeq++;
+        let newSeq = ++updateSeq;
         let ret = {
-            cmd: 101,
+            cmd: EWsNotiCmd.ServerStream,
             body: {
                 seq: newSeq,
                 items: newItems
@@ -138,15 +133,21 @@ io.on('connection', (socket: Socket) => {
 
         const cmd: number = data.cmd;
         switch(cmd){
-            case 100: {
+            case EWsReqCmd.StartServerStreaming: {
+                //INFO: 서버 조회 스트리밍 시작
                 socket.emit('message', {
-                    cmd: 101,
+                    cmd: EWsNotiCmd.ServerStream,
                     body: {
                         seq: updateSeq,
                         items: Array.from(serverMap.values())
                     }
                 });
                 serverSubscribers.add(idx);
+                break;
+            }
+            case EWsReqCmd.StopServerStreaming: {
+                //INFO: 서버 조회 스트리밍 중지
+                if(serverSubscribers.has(idx)) serverSubscribers.delete(idx);
                 break;
             }
         }
@@ -160,6 +161,6 @@ io.on('connection', (socket: Socket) => {
     
 })
 
-server.listen(3000, () => {
-    console.log('Listening on *:3000');
+server.listen(serverPort, () => {
+    console.log('Listening on *:' + serverPort);
 });

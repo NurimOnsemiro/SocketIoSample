@@ -1,6 +1,7 @@
 import io from 'socket.io-client';
+import { EWsNotiCmd, EWsReqCmd } from './const_common';
 
-const socket = io('ws://127.0.0.1:3000', {
+const socket = io('ws://127.0.0.1:3100', {
     reconnectionDelayMax: 10000,
 });
 
@@ -25,13 +26,14 @@ let serverMap = new Map<number, IServerForm>();
 socket.on('connect', () => {
     console.log(socket.id + ' connect');
     socket.emit('message', {
-        cmd: 100,
+        cmd: EWsReqCmd.StartServerStreaming,
         body: {}
     });
 })
 
 socket.on('message', (data: any) => {
-    if(data.cmd === 101){
+    console.log(JSON.stringify(data));
+    if(data.cmd === EWsNotiCmd.ServerStream){
         if(updateSeq === -1){
             updateSeq = data.body.seq;
         } else if(data.body.seq - updateSeq !== 1){
