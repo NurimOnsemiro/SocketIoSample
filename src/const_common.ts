@@ -3,6 +3,11 @@ export const enum EWsReqCmd {
     StopServerStreaming = 102,
 }
 
+export const enum EWsResCmd {
+    StartServerStreaming = 101,
+    StopServerStreaming = 103,
+}
+
 export const enum EWsNotiCmd {
     ServerStream = 10000,
 }
